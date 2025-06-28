@@ -382,7 +382,7 @@ export const useRepay = () => {
     }
   }, [isApproveSuccess]);
 
-  const repay = async (amount: string) => {
+  const repay = async (amount: string, currentAllowance: string) => {
     if (!amount || parseFloat(amount) <= 0) {
       console.error('Invalid repay amount:', amount);
       return;
@@ -396,17 +396,27 @@ export const useRepay = () => {
     }
     
     try {
-      const value = ethers.parseUnits(amount, 6);
+      const requiredAmount = ethers.parseUnits(amount, 6);
+      const currentAllowanceBigInt = ethers.parseUnits(currentAllowance, 6);
       
-      // 先授权USDC给合约
+      // 如果当前授权额度已经足够，直接执行还款
+      if (currentAllowanceBigInt >= requiredAmount) {
+        console.log('Allowance sufficient, executing repay directly');
+        executeRepay(amount);
+        return;
+      }
+      
+      // 授权完整的还款金额（确保总授权额度足够）
       console.log('Approving USDC for contract...', {
-        spender: CONTRACT_ADDRESSES.COLLATERAL_VAULT,
-        amount: value.toString(),
+        currentAllowance: currentAllowance,
+        requiredAmount: ethers.formatUnits(requiredAmount, 6),
+        totalToApprove: ethers.formatUnits(requiredAmount, 6),
         userBalance: usdcBalance?.formatted
       });
       
+      // 授权完整的还款金额
       approveWrite({ 
-        args: [CONTRACT_ADDRESSES.COLLATERAL_VAULT, value] 
+        args: [CONTRACT_ADDRESSES.COLLATERAL_VAULT, requiredAmount] 
       });
     } catch (error) {
       console.error('Error in repay:', error);

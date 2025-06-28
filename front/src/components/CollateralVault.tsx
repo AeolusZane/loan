@@ -92,7 +92,7 @@ const CollateralVault: React.FC = () => {
 
   const handleRepay = () => {
     if (repayAmount && parseFloat(repayAmount) > 0) {
-      repay(repayAmount);
+      repay(repayAmount, usdcAllowance);
     }
   };
 
@@ -327,7 +327,7 @@ const CollateralVault: React.FC = () => {
                       }`}>
                         {parseFloat(usdcAllowance) >= parseFloat(repayAmount) 
                           ? `授权额度充足，可直接还款` 
-                          : `需要先授权 ${parseFloat(repayAmount) - parseFloat(usdcAllowance)} USDC`
+                          : `需要授权 ${parseFloat(repayAmount).toFixed(2)} USDC（当前授权: ${parseFloat(usdcAllowance).toFixed(2)} USDC）`
                         }
                       </span>
                     </div>
@@ -354,19 +354,7 @@ const CollateralVault: React.FC = () => {
                       variant="secondary"
                       className="w-full"
                     >
-                      {isApproveSuccess ? '已授权' : '授权USDC'}
-                    </Button>
-                  )}
-                  
-                  {/* 如果授权成功但还没有直接还款，显示还款按钮 */}
-                  {isApproveSuccess && parseFloat(usdcAllowance) < parseFloat(repayAmount || '0') && (
-                    <Button 
-                      onClick={handleExecuteRepay}
-                      loading={isRepaying}
-                      disabled={!repayAmount || parseFloat(repayAmount) <= 0 || (repayUsdcBalance && parseFloat(repayAmount) > parseFloat(repayUsdcBalance.formatted))}
-                      className="w-full"
-                    >
-                      还款USDC
+                      {isApproveSuccess ? '已授权' : `授权 ${parseFloat(repayAmount || '0').toFixed(2)} USDC`}
                     </Button>
                   )}
                   
@@ -377,8 +365,9 @@ const CollateralVault: React.FC = () => {
                       console.log('Contract address:', CONTRACT_ADDRESSES.COLLATERAL_VAULT);
                       console.log('User address:', address);
                       console.log('Repay amount:', repayAmount);
+                      console.log('Current allowance:', usdcAllowance);
+                      console.log('Will approve full amount:', parseFloat(repayAmount || '0').toFixed(2));
                       console.log('Is authorized:', isApproveSuccess);
-                      console.log('USDC allowance:', usdcAllowance);
                       console.log('USDC balance:', repayUsdcBalance?.formatted);
                       console.log('Can repay directly:', parseFloat(usdcAllowance) >= parseFloat(repayAmount || '0'));
                     }}
